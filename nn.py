@@ -6,7 +6,7 @@ import numpy as np
 from ultralytics import YOLO
 
 # Load the YOLOv8 model
-model = YOLO('yolov8n.pt')
+model = YOLO('best.pt')
 
 # Open the video file
 video_path = "1.mp4"
@@ -33,23 +33,20 @@ while cap.isOpened():
 
         # Visualize the results on the frame
         annotated_frame = results[0].plot()
-
+        dst = cv2.imread('map_g.png', -1)
         # Plot the tracks
         for box, track_id in zip(boxes, track_ids):
             x, y, w, h = box
             track = track_history[track_id]
             track.append((float(x), float(y)))  # x, y center point
-            if len(track) > 30:  # retain 90 tracks for 90 frames
-                track.pop(0)
 
             # Draw the tracking lines
-            dst = cv2.imread('map_g.png', -1)
+
             points = np.hstack(track).astype(np.int32).reshape((-1, 1, 2))
             h_points = cv2.perspectiveTransform(points.astype(np.float32), H, (dst.shape[1], dst.shape[0]))
 
-
-            cv2.polylines(annotated_frame, [points], isClosed=False, color=(230, 230, 230), thickness=10)
-            cv2.polylines(dst, [h_points.astype(int)], isClosed=False, color=(230, 230, 230), thickness=10)
+            cv2.polylines(annotated_frame, [points], isClosed=False, color=(0, 0, 255), thickness=2)
+            cv2.circle(dst, (h_points[-1][0].astype(int)), color=(0, 255, 255), thickness=3, radius=2)
 
         # Display the annotated frame
 
