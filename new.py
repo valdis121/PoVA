@@ -58,7 +58,7 @@ cv.namedWindow('src')
 cv.moveWindow("src", 80,80);
 cv.setMouseCallback('src', select_points_src)
 
-dst = cv.imread('map_g.png', -1)
+dst = cv.imread('map.png', -1)
 dst_copy = dst.copy()
 cv.namedWindow('dst')
 cv.moveWindow("dst", 780,80);

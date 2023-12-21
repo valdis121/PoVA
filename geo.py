@@ -1,34 +1,44 @@
+import time
+import os
 from geopy.distance import geodesic
 import folium
+from selenium import webdriver
 
+def calculate_distance(bottom_left, top_right, width):
+    distance_meters = geodesic(bottom_left, top_right).meters
+    distance_kilometers = distance_meters / 1000
+    kilometers_per_pixel = distance_kilometers / width
+    return kilometers_per_pixel
 
-# Set the coordinates of the bottom left corner
-bottom_left = (37.773972, -122.430673)
+def save_map_as_html(mymap, html_file):
+    mymap.save(html_file)
 
-# Set the dimensions and scale
-width = 800  # width in pixels
-height = 600  # height in pixels
-zoom = 15  # zoom level (larger value means closer)
+def open_map_in_browser(html_file):
+    current_dir = os.getcwd()
+    browser = webdriver.Chrome()
+    browser.get('file://' + os.path.join(current_dir, html_file))
+    time.sleep(5)
+    browser.save_screenshot('map.png')
+    browser.quit()
 
-# Set the coordinates of the top right corner
-top_right = (bottom_left[0] + height * 360 / (2 ** zoom), bottom_left[1] + width * 360 / (2 ** zoom))
+def main():
+    middle = (51.041777, 13.735755)
+    width = 1280
+    height = 900
+    zoom = 18
+    # take small radius around middle point
+    bottom_left = (middle[0] - 0.0001, middle[1] - 0.0001)
+    top_right = (middle[0] + 0.0001, middle[1] + 0.0001)
 
-# Calculate the distance between two points (in meters)
-distance_meters = geodesic(bottom_left, top_right).meters
+    kilometers_per_pixel = calculate_distance(bottom_left, top_right, width)
+    print(f'Kilometers per pixel: {kilometers_per_pixel:.6f} km/pixel')
 
-# Convert the distance to kilometers
-distance_kilometers = distance_meters / 1000
+    mymap = folium.Map(location=bottom_left, zoom_start=zoom, control_scale=True)
+    html_file = 'map_folium.html'
+    save_map_as_html(mymap, html_file)
+    open_map_in_browser(html_file)
 
-# Calculate kilometers per pixel
-kilometers_per_pixel = distance_kilometers / width
-
-print(f'Kilometers per pixel: {kilometers_per_pixel:.6f} km/pixel')
-
-# Create a folium map object
-mymap = folium.Map(location=bottom_left, zoom_start=zoom, control_scale=True)
-
-# Save the map as an HTML file
-html_file = 'map_folium.html'
-mymap.save(html_file)
+if __name__ == "__main__":
+    main()
 
 
