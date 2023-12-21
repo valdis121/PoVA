@@ -3,11 +3,25 @@ import os
 from geopy.distance import geodesic
 import folium
 from selenium import webdriver
+import math
+import cv2
 
-def calculate_distance(bottom_left, top_right, width):
-    distance_meters = geodesic(bottom_left, top_right).meters
+
+def calculate_map_dimensions(center, zoom_level, aspect_ratio=1.0):
+    # Радиус Земли в градусах
+    earth_radius = 6371.0
+
+    # Расчет длины карты и ширины карты в градусах
+    map_length = math.pow(2, 21 - zoom_level) * 256 / earth_radius
+    map_width = map_length * aspect_ratio
+    map_height = map_length
+
+    return map_width, map_height
+
+def calculate_distance(left, right, height):
+    distance_meters = geodesic(left, right).meters
     distance_kilometers = distance_meters / 1000
-    kilometers_per_pixel = distance_kilometers / width
+    kilometers_per_pixel = distance_kilometers / height
     return kilometers_per_pixel
 
 def save_map_as_html(mymap, html_file):
@@ -21,23 +35,53 @@ def open_map_in_browser(html_file):
     browser.save_screenshot('map.png')
     browser.quit()
 
+def get_map_edges(center, zoom_level, width, height):
+    center_lat, center_lng = center
+
+    # Рассчитайте расстояния в градусах для заданной ширины и высоты карты
+    lat_distance = height / 2
+    lng_distance = width / 2
+
+    # Рассчитайте географические координаты краев карты
+    top_left = (center_lat + lat_distance, center_lng - lng_distance)
+    bottom_right = (center_lat - lat_distance, center_lng + lng_distance)
+
+    # Найдите средину верха и средину низа
+    top_center = (center_lat + lat_distance, center_lng)
+    bottom_center = (center_lat - lat_distance, center_lng)
+
+    return top_left, bottom_right, top_center, bottom_center
+
+# Пример использования
 def main():
     middle = (51.041777, 13.735755)
-    width = 1280
-    height = 900
     zoom = 18
+
     # take small radius around middle point
-    bottom_left = (middle[0] - 0.0001, middle[1] - 0.0001)
-    top_right = (middle[0] + 0.0001, middle[1] + 0.0001)
+    left = (middle[0] - 0.0011, middle[1])
+    right = (middle[0] + 0.00109999999, middle[1])
 
-    kilometers_per_pixel = calculate_distance(bottom_left, top_right, width)
-    print(f'Kilometers per pixel: {kilometers_per_pixel:.6f} km/pixel')
 
-    mymap = folium.Map(location=bottom_left, zoom_start=zoom, control_scale=True)
+    mymap = folium.Map(location=middle, zoom_start=zoom, control_scale=True)
+    satellite_layer = folium.TileLayer(
+        tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+        attr='Google',
+        name='Google Satellite',
+        overlay=True,
+        control=True
+    )
+    satellite_layer.add_to(mymap)
+
     html_file = 'map_folium.html'
     save_map_as_html(mymap, html_file)
+
     open_map_in_browser(html_file)
 
+    # Загрузить изображение с помощью OpenCV
+    image = cv2.imread("map.png")
+    height = image.shape[0]
+    speed = calculate_distance(left, right, height)
+    print("Speed {}km/pix".format(speed))
 if __name__ == "__main__":
     main()
 

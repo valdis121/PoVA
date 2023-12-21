@@ -53,32 +53,31 @@ while cap.isOpened():
 
             points = np.hstack(track).astype(np.int32).reshape((-1, 1, 2))
             h_points = cv2.perspectiveTransform(points.astype(np.float32), H, (dst.shape[1], dst.shape[0]))
-
             cv2.polylines(annotated_frame, [points], isClosed=False, color=(0, 0, 255), thickness=2)
             cv2.circle(dst, (h_points[-1][0].astype(int)), color=(0, 255, 255), thickness=3, radius=2)
 
             # Calculate the speed of the car
 
             if track_id in previous_positions:
-                dx, dy = x - previous_positions[track_id][0], y - previous_positions[track_id][1]
+                dx, dy = h_points[-1][0][0] - previous_positions[track_id][0], h_points[-1][0][1] - previous_positions[track_id][1]
                 distance = np.sqrt(dx**2 + dy**2)  # in pixels
                 speed = distance / frame_time  # pixels/second
 
                 # Convert speed to km/hour
-                km_per_pixel = 0.000021  # scale from GIS
+                km_per_pixel = 0.0002966642033857266  # scale from GIS
                 speed_kmh = speed * km_per_pixel * 3600  # km/hour
 
                 # Convert speed to string and write it on the frame
                 speed_text = f"Speed: {speed_kmh:.2f} km/hour"
                 cv2.putText(annotated_frame, speed_text, (int(x - 25), int(y - 45)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            previous_positions[track_id] = (x, y)
+            previous_positions[track_id] = h_points[-1][0]
         
         # Display the annotated frame
         out.write(annotated_frame)
         out_map.write(dst)
-        #cv2.imshow("YOLOv8 Tracking", annotated_frame)
-        #cv2.imshow("Map", dst)
+        cv2.imshow("YOLOv8 Tracking", annotated_frame)
+        cv2.imshow("Map", dst)
         # Break the loop if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
