@@ -25,8 +25,8 @@ fps = cap.get(cv2.CAP_PROP_FPS)
 frame_time = 1 / fps
 
 # Store the previous positions of each car
-previous_positions = {}
-
+previous_positions = defaultdict(lambda: [0,0,0])
+dst_org = cv2.imread('map.png', -1)
 # Loop through the video frames
 while cap.isOpened():
     # Read a frame from the video
@@ -35,14 +35,14 @@ while cap.isOpened():
 
     if success:
         # Run YOLOv8 tracking on the frame, persisting tracks between frames
-        results = model.track(frame, persist=True)
+        results = model.track(frame, persist=True, classes = [2,3,4,5,6,7,8,9])
         # Get the boxes and track IDs
         boxes = results[0].boxes.xywh.cpu()
         track_ids = results[0].boxes.id.int().cpu().tolist()
 
         # Visualize the results on the frame
         annotated_frame = results[0].plot()
-        dst = cv2.imread('map.png', -1)
+        dst = dst_org.copy()
         # Plot the tracks
         for box, track_id in zip(boxes, track_ids):
             x, y, w, h = box
@@ -58,20 +58,23 @@ while cap.isOpened():
 
             # Calculate the speed of the car
 
-            if track_id in previous_positions:
-                dx, dy = h_points[-1][0][0] - previous_positions[track_id][0], h_points[-1][0][1] - previous_positions[track_id][1]
-                distance = np.sqrt(dx**2 + dy**2)  # in pixels
-                speed = distance / frame_time  # pixels/second
+            if (track_id in previous_positions) and previous_positions[track_id][1] < int(fps/4):
+                previous_positions[track_id][1]+=1
+                if previous_positions[track_id][1] == int(fps/4):
 
-                # Convert speed to km/hour
-                km_per_pixel = 0.0002966642033857266  # scale from GIS
-                speed_kmh = speed * km_per_pixel * 3600  # km/hour
+                    dx, dy = h_points[-1][0][0] - previous_positions[track_id][0][0], h_points[-1][0][1] - previous_positions[track_id][0][1]
+                    distance = np.sqrt(dx**2 + dy**2)  # in pixels
+                    speed = distance / (frame_time*int(fps/4))  # pixels/second
 
-                # Convert speed to string and write it on the frame
-                speed_text = f"Speed: {speed_kmh:.2f} km/hour"
+                    # Convert speed to km/hour
+                    km_per_pixel = 0.0002966642033857266  # scale from GIS
+                    speed_kmh = speed * km_per_pixel * 3600  # km/hour
+                    previous_positions[track_id][2] = speed_kmh
+
+                speed_text = f"Speed: {previous_positions[track_id][2]:.2f} km/hour"
                 cv2.putText(annotated_frame, speed_text, (int(x - 25), int(y - 45)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-            previous_positions[track_id] = h_points[-1][0]
+            else:
+                previous_positions[track_id] = [h_points[-1][0], 0, previous_positions[track_id][2]]
         
         # Display the annotated frame
         out.write(annotated_frame)
