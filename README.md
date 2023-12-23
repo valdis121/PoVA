@@ -1,4 +1,9 @@
-# Project Name
+# Traffic analysis with YOLOv8
+
+There are only source files of our latex report without images.
+We were not able to upload our documentation because of size restrictions. Our had 17Mb and limit in VUT IS is only 10Mb.
+Here is the link to it - https://www.overleaf.com/8985756448kcmwxkvqjxxy#7e30cd
+Our prezentation - https://docs.google.com/presentation/d/1GyvNx3bWsOMYYoNqWbjTuuZfVZwnUh0yMxqG3ORn3r8/edit#slide=id.g2a9a0773282_0_29
 
 This project consists of three scripts: `geo.py`, `new.py`, and `nn.py`.
 
@@ -21,9 +26,9 @@ Please refer to the individual script files for more detailed information on the
 To run this project, you will need to install the following dependencies:
 
 - Geopy
-- YOLOv8
+- ultralytics
 
 You can install these dependencies using pip:
 ```bash
 pip install geopy
-pip install yolov8
+pip install ultralytics
