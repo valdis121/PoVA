@@ -8,10 +8,8 @@ import cv2
 
 
 def calculate_map_dimensions(center, zoom_level, aspect_ratio=1.0):
-    # Радиус Земли в градусах
     earth_radius = 6371.0
 
-    # Расчет длины карты и ширины карты в градусах
     map_length = math.pow(2, 21 - zoom_level) * 256 / earth_radius
     map_width = map_length * aspect_ratio
     map_height = map_length
@@ -38,21 +36,17 @@ def open_map_in_browser(html_file):
 def get_map_edges(center, zoom_level, width, height):
     center_lat, center_lng = center
 
-    # Рассчитайте расстояния в градусах для заданной ширины и высоты карты
     lat_distance = height / 2
     lng_distance = width / 2
 
-    # Рассчитайте географические координаты краев карты
     top_left = (center_lat + lat_distance, center_lng - lng_distance)
     bottom_right = (center_lat - lat_distance, center_lng + lng_distance)
 
-    # Найдите средину верха и средину низа
     top_center = (center_lat + lat_distance, center_lng)
     bottom_center = (center_lat - lat_distance, center_lng)
 
     return top_left, bottom_right, top_center, bottom_center
 
-# Пример использования
 def main():
     middle = (51.041777, 13.735755)
     zoom = 18
@@ -77,7 +71,6 @@ def main():
 
     open_map_in_browser(html_file)
 
-    # Загрузить изображение с помощью OpenCV
     image = cv2.imread("map.png")
     height = image.shape[0]
     speed = calculate_distance(left, right, height)
